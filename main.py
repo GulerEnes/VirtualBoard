@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import time
+
 start = time.time()
 count = 0
 cap = cv.VideoCapture(0)
@@ -15,7 +16,7 @@ while True:
     hsvFrame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
     # Set range for red color and define mask
-    red_lower = np.array([136, 150, 90], np.uint8)
+    red_lower = np.array([136, 150, 100], np.uint8)
     red_upper = np.array([180, 255, 255], np.uint8)
     red_mask = cv.inRange(hsvFrame, red_lower, red_upper)
 
@@ -35,14 +36,21 @@ while True:
     # Creating contours
     # for red
     contours, hierarchy = cv.findContours(red_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-    for contour in contours:
-        area = cv.contourArea(contour)
-        if area > 200:
-            x, y, w, h = cv.boundingRect(contour)
-            lefttop = (x,y)#(x + w // 2, y + h // 2)
+    areas = [cv.contourArea(i) for i in contours]
+    if len(areas) > 0:
+        i = areas.index(max(areas))
+        if cv.contourArea(contours[i]) > 200:
+            x, y, w, h = cv.boundingRect(contours[i])
+            lefttop = x, y  # (x + w // 2, y + h // 2)
             board = cv.circle(board, lefttop, 5, (0, 0, 255), -1)
-
+    # for contour in contours:
+    #     area = cv.contourArea(contour)
+    #     if area > 200:
+    #         x, y, w, h = cv.boundingRect(contour)
+    #         lefttop = x, y  # (x + w // 2, y + h // 2)
+    #         board = cv.circle(board, lefttop, 5, (0, 0, 255), -1)
+    # areas.append(area)
+    # print(areas)
     # for blue
     contours, hierarchy = cv.findContours(blue_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -53,16 +61,14 @@ while True:
             center = (x + w // 2, y + h // 2)
             board = cv.circle(board, center, 25, (0, 0, 0), -1)
 
-
     frame = cv.addWeighted(board, 1, frame, 1, 0)
 
-
     cv.imshow('result', frame)
-    count+=1
+    count += 1
     if cv.waitKey(1) == ord('q'):
         break
 
 cap.release()
 cv.destroyAllWindows()
 end = time.time()
-print(count/(end-start))
+print(count / (end - start))
